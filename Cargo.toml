@@ -1,0 +1,28 @@
+[package]
+name = "dioxus_hack"
+version = "0.1.0"
+edition = "2021"
+authors = ["Brian Edwards <brian.edwards@jalopymusic.com>"]
+license = "GPL-3.0-or-later"
+homepage = "https://jalopymusic.com"
+description = "Hack in a Dioxus editor"
+
+[workspace]
+members = ["xtask"]
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+# Remove the `assert_process_allocs` feature to allow allocations on the audio
+# thread in debug builds.
+nih_plug = { git = "https://github.com/robbert-vdh/nih-plug.git", features = ["assert_process_allocs"] }
+
+[profile.release]
+lto = "thin"
+strip = "symbols"
+
+[profile.profiling]
+inherits = "release"
+debug = true
+strip = "none"
