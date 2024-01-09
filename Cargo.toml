@@ -16,6 +16,7 @@ crate-type = ["cdylib"]
 [dependencies]
 dioxus = "0.4.3"
 dioxus-desktop = "0.4.3"
+
 # Remove the `assert_process_allocs` feature to allow allocations on the audio
 # thread in debug builds.
 nih_plug = { git = "https://github.com/robbert-vdh/nih-plug.git", features = ["assert_process_allocs"] }

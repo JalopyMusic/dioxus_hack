@@ -1,6 +1,93 @@
 use dioxus::prelude::*;
+use dioxus_desktop::tao::platform::macos::WindowBuilderExtMacOS;
 use nih_plug::prelude::*;
 use std::sync::Arc;
+
+fn root(cx: Scope) -> Element {
+    render!(
+        div {
+            style: "width: 300px; height: 300px; background-color: pink; color: blue;",
+            "Howdy nih_plug world!!!"
+        }
+    )
+}
+
+struct ParentWindowWrapper {
+    parent_window: *mut ::std::os::raw::c_void,
+}
+
+unsafe impl Send for ParentWindowWrapper {}
+
+unsafe impl Sync for ParentWindowWrapper {}
+
+struct DioxusEditorHandle;
+
+struct DioxusEditor;
+
+impl Editor for DioxusEditor {
+    fn spawn(
+        &self,
+        parent: ParentWindowHandle,
+        _context: Arc<dyn GuiContext>,
+    ) -> Box<dyn std::any::Any + Send> {
+        let parent_window_wrapper = Arc::new(ParentWindowWrapper {
+            parent_window: match parent {
+                ParentWindowHandle::X11Window(_) => todo!(),
+                ParentWindowHandle::AppKitNsView(p) => p,
+                ParentWindowHandle::Win32Hwnd(p) => p,
+            },
+        });
+
+        std::thread::spawn(move || {
+            let size = dioxus_desktop::LogicalSize {
+                width: 300,
+                height: 300,
+            };
+
+            let window = dioxus_desktop::WindowBuilder::default()
+                .with_parent_window(parent_window_wrapper.parent_window)
+                .with_inner_size(size)
+                .with_min_inner_size(size)
+                .with_max_inner_size(size)
+                .with_closable(true)
+                .with_focused(true)
+                .with_maximizable(false)
+                .with_maximized(false)
+                .with_minimizable(false)
+                .with_resizable(false)
+                .with_title("Dioxus Hack");
+
+            let config = dioxus_desktop::Config::default()
+                .with_background_color((255, 255, 255, 255))
+                .with_close_behaviour(dioxus_desktop::WindowCloseBehaviour::LastWindowHides)
+                .with_window(window);
+
+            dioxus_desktop::launch_cfg(root, config);
+        });
+
+        Box::new(DioxusEditorHandle {})
+    }
+
+    fn size(&self) -> (u32, u32) {
+        (300, 300)
+    }
+
+    fn set_scale_factor(&self, _factor: f32) -> bool {
+        todo!()
+    }
+
+    fn param_value_changed(&self, _id: &str, _normalized_value: f32) {
+        todo!()
+    }
+
+    fn param_modulation_changed(&self, _id: &str, _modulation_offset: f32) {
+        todo!()
+    }
+
+    fn param_values_changed(&self) {
+        todo!()
+    }
+}
 
 #[derive(Params)]
 struct MyPluginParams {
@@ -37,47 +124,6 @@ impl Default for MyPlugin {
         Self {
             params: Arc::new(MyPluginParams::default()),
         }
-    }
-}
-
-struct DioxusEditorHandle;
-
-struct DioxusEditor;
-
-impl DioxusEditor {
-    fn root(cx: Scope) -> Element {
-        render!("hello nih_plug world")
-    }
-}
-
-impl Editor for DioxusEditor {
-    fn spawn(
-        &self,
-        _parent: ParentWindowHandle,
-        _context: Arc<dyn GuiContext>,
-    ) -> Box<dyn std::any::Any + Send> {
-        std::thread::spawn(|| dioxus_desktop::launch(Self::root));
-        Box::new(DioxusEditorHandle {})
-    }
-
-    fn size(&self) -> (u32, u32) {
-        (300, 300)
-    }
-
-    fn set_scale_factor(&self, _factor: f32) -> bool {
-        todo!()
-    }
-
-    fn param_value_changed(&self, _id: &str, _normalized_value: f32) {
-        todo!()
-    }
-
-    fn param_modulation_changed(&self, _id: &str, _modulation_offset: f32) {
-        todo!()
-    }
-
-    fn param_values_changed(&self) {
-        todo!()
     }
 }
 
