@@ -1,3 +1,4 @@
+use dioxus::prelude::*;
 use nih_plug::prelude::*;
 use std::sync::Arc;
 
@@ -39,7 +40,52 @@ impl Default for MyPlugin {
     }
 }
 
+struct DioxusEditorHandle;
+
+struct DioxusEditor;
+
+impl DioxusEditor {
+    fn root(cx: Scope) -> Element {
+        render!("hello nih_plug world")
+    }
+}
+
+impl Editor for DioxusEditor {
+    fn spawn(
+        &self,
+        _parent: ParentWindowHandle,
+        _context: Arc<dyn GuiContext>,
+    ) -> Box<dyn std::any::Any + Send> {
+        std::thread::spawn(|| dioxus_desktop::launch(Self::root));
+        Box::new(DioxusEditorHandle {})
+    }
+
+    fn size(&self) -> (u32, u32) {
+        (300, 300)
+    }
+
+    fn set_scale_factor(&self, _factor: f32) -> bool {
+        todo!()
+    }
+
+    fn param_value_changed(&self, _id: &str, _normalized_value: f32) {
+        todo!()
+    }
+
+    fn param_modulation_changed(&self, _id: &str, _modulation_offset: f32) {
+        todo!()
+    }
+
+    fn param_values_changed(&self) {
+        todo!()
+    }
+}
+
 impl Plugin for MyPlugin {
+    fn editor(&mut self, _async_executor: AsyncExecutor<Self>) -> Option<Box<dyn Editor>> {
+        Some(Box::new(DioxusEditor {}))
+    }
+
     fn initialize(
         &mut self,
         _audio_io_layout: &AudioIOLayout,
